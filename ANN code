@@ -1,0 +1,95 @@
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
+#first layer has same number of neurons as features
+#last layers has one neuron, as binary classification is happening, heartbeat is either normal(0) or not normal(1)
+#33000 ecg signals, 100 features
+# Check the paper for choosing the lengths, standard values
+# each neuron connected to all neurons in consecutive neuron
+#different loss functions(error optimizers) are used
+#each neuron has a bias and weight
+# eac
+#optimizer updates weights
+#metrics determine accuracy
+#Three steps to design a neural network:
+# 1) Define structure 2) Train  3) Test and predict
+#%%
+df = pd.read_csv('ECG_ANN.csv') #39000+ samples, 101 columns, dataset has 100 columns with voltage values that make the first pqrst complex
+#df.dropna() removes NaN values
+#%%
+y = df['100']#the hundredth row contains the label
+
+# %%
+from sklearn.preprocessing import scale
+from sklearn.model_selection import train_test_split
+
+X = df.iloc[:, :99].values #99 features being taken
+
+
+# %%
+
+print(X.shape, y.shape)
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=123)
+
+# %%
+
+from keras.models import Sequential
+from keras.layers import Dense
+
+
+# %%
+
+#4 layers
+model = Sequential()
+model.add(Dense(128, input_dim=99, activation='relu'))
+model.add(Dense(32, activation='relu'))#relu gives 0 to infinite value, activate functions make it non linear
+model.add(Dense(1, activation='sigmoid'))#sigmoid gives probability value(0 - 1)
+
+model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']) #mean squared error also exists
+
+
+model.fit(X_train, y_train, epochs=10)#trains data, epochs are how many times the model runs and hence how many times the weight is updated
+
+scores = model.evaluate(X_test, y_test)
+print("%s: %.2f%%" % (model.metrics_names[1], scores[1] * 100))
+
+df = pd.read_csv('ecg_test.csv')
+
+time_vals = df['time'].tolist()#takes time column from csv and converts to list
+volt_vals = df['voltage'].tolist()#takes time column from csv and converts to list
+
+ecg_new = volt_vals[10:109]#choose 99 values that show a PQRS complex
+
+test_data = np.expand_dims(np.array(ecg_new), axis=0)#makes list an array of (x , 99)
+score = model.predict(test_data)
+print('Your heart is behaving', score)
+
+
+# %%
+
+# test = np.array(X_test[2])
+# ynew = model.predict(test.reshape(1,99))
+
+# test2 = np.array(X_test[6])
+# ynew2 = model.predict(test2.reshape(1,99))
+
+
+# y_test_new=np.array(y_test.tolist())
+
+# # %%
+
+# matplotlib.rcParams.update({'font.size': 20})
+# # Graph to plot all peaks and data points together
+# fig, ax = plt.subplots()
+
+# ax.set(xlabel='Time (Samples)',
+#        ylabel='Voltage(mV)',
+#        title='ECG'
+#        )
+
+# ax.plot(X_test[6])
+# ax.plot(X_test[2])
+
+# plt.show()
+
